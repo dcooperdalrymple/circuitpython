@@ -10,6 +10,7 @@
 
 typedef struct synthio_lfo_obj synthio_lfo_obj_t;
 extern const mp_obj_type_t synthio_lfo_type;
+typedef struct synthio_block_state synthio_block_state_t;
 
 mp_obj_t common_hal_synthio_lfo_get_waveform_obj(synthio_lfo_obj_t *self);
 void common_hal_synthio_lfo_set_waveform_obj(synthio_lfo_obj_t *self, mp_obj_t arg);
@@ -37,4 +38,4 @@ mp_float_t common_hal_synthio_lfo_get_value(synthio_lfo_obj_t *self);
 mp_float_t common_hal_synthio_lfo_get_phase(synthio_lfo_obj_t *self);
 
 void common_hal_synthio_lfo_retrigger(synthio_lfo_obj_t *self);
-mp_float_t common_hal_synthio_lfo_tick(mp_obj_t self_in);
+mp_float_t common_hal_synthio_lfo_tick(mp_obj_t self_in, synthio_block_state_t *state);

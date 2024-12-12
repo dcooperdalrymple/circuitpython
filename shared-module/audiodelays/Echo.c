@@ -86,7 +86,7 @@ void common_hal_audiodelays_echo_construct(audiodelays_echo_obj_t *self, uint32_
     memset(self->echo_buffer, 0, self->max_echo_buffer_len);
 
     // calculate everything needed for the current delay
-    mp_float_t f_delay_ms = synthio_block_slot_get(&self->delay_ms);
+    mp_float_t f_delay_ms = synthio_block_slot_get(&self->delay_ms, &self->block_state);
     recalculate_delay(self, f_delay_ms);
 
     // read is where we read previous echo from delay_ms ago to play back now
@@ -121,7 +121,7 @@ mp_obj_t common_hal_audiodelays_echo_get_delay_ms(audiodelays_echo_obj_t *self) 
 void common_hal_audiodelays_echo_set_delay_ms(audiodelays_echo_obj_t *self, mp_obj_t delay_ms) {
     synthio_block_assign_slot(delay_ms, &self->delay_ms, MP_QSTR_delay_ms);
 
-    mp_float_t f_delay_ms = synthio_block_slot_get(&self->delay_ms);
+    mp_float_t f_delay_ms = synthio_block_slot_get(&self->delay_ms, &self->block_state);
 
     recalculate_delay(self, f_delay_ms);
 }
@@ -178,7 +178,7 @@ bool common_hal_audiodelays_echo_get_freq_shift(audiodelays_echo_obj_t *self) {
 
 void common_hal_audiodelays_echo_set_freq_shift(audiodelays_echo_obj_t *self, bool freq_shift) {
     self->freq_shift = freq_shift;
-    uint32_t delay_ms = (uint32_t)synthio_block_slot_get(&self->delay_ms);
+    uint32_t delay_ms = (uint32_t)synthio_block_slot_get(&self->delay_ms, &self->block_state);
     recalculate_delay(self, delay_ms);
 }
 
@@ -285,10 +285,10 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
     }
 
     // get the effect values we need from the BlockInput. These may change at run time so you need to do bounds checking if required
-    mp_float_t mix = MIN(1.0, MAX(synthio_block_slot_get(&self->mix), 0.0));
-    mp_float_t decay = MIN(1.0, MAX(synthio_block_slot_get(&self->decay), 0.0));
+    mp_float_t mix = MIN(1.0, MAX(synthio_block_slot_get(&self->mix, &self->block_state), 0.0));
+    mp_float_t decay = MIN(1.0, MAX(synthio_block_slot_get(&self->decay, &self->block_state), 0.0));
 
-    uint32_t delay_ms = (uint32_t)synthio_block_slot_get(&self->delay_ms);
+    uint32_t delay_ms = (uint32_t)synthio_block_slot_get(&self->delay_ms, &self->block_state);
     if (self->current_delay_ms != delay_ms) {
         recalculate_delay(self, delay_ms);
     }

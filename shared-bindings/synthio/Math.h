@@ -28,6 +28,7 @@ typedef enum {
 typedef struct synthio_math_obj synthio_math_obj_t;
 extern const mp_obj_type_t synthio_math_type;
 extern const mp_obj_type_t synthio_math_operation_type;
+typedef struct synthio_block_state synthio_block_state_t;
 
 mp_obj_t common_hal_synthio_math_get_input_obj(synthio_math_obj_t *self, size_t i);
 void common_hal_synthio_math_set_input_obj(synthio_math_obj_t *self, size_t i, mp_obj_t arg, qstr argname);
@@ -37,4 +38,4 @@ void common_hal_synthio_math_set_operation(synthio_math_obj_t *self, synthio_mat
 
 mp_float_t common_hal_synthio_math_get_value(synthio_math_obj_t *self);
 
-mp_float_t common_hal_synthio_math_tick(mp_obj_t self_in);
+mp_float_t common_hal_synthio_math_tick(mp_obj_t self_in, synthio_block_state_t *state);

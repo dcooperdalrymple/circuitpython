@@ -32,16 +32,16 @@ mp_float_t common_hal_synthio_math_get_value(synthio_math_obj_t *self) {
     return self->base.value;
 }
 
-mp_float_t common_hal_synthio_math_tick(mp_obj_t self_in) {
+mp_float_t common_hal_synthio_math_tick(mp_obj_t self_in, synthio_block_state_t *state) {
     synthio_math_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_float_t a = synthio_block_slot_get(&self->inputs[0]);
+    mp_float_t a = synthio_block_slot_get(&self->inputs[0], state);
 
     if (self->operation == OP_ABS) {
         return MICROPY_FLOAT_C_FUN(fabs)(a);
     }
 
-    mp_float_t b = synthio_block_slot_get(&self->inputs[1]);
-    mp_float_t c = synthio_block_slot_get(&self->inputs[2]);
+    mp_float_t b = synthio_block_slot_get(&self->inputs[1], state);
+    mp_float_t c = synthio_block_slot_get(&self->inputs[2], state);
 
     switch (self->operation) {
         case OP_SUM:

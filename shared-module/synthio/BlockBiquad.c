@@ -73,11 +73,11 @@ static int float_equal_or_update(
     return true;
 }
 
-void common_hal_synthio_block_biquad_tick(mp_obj_t self_in, biquad_filter_state *filter_state) {
+void common_hal_synthio_block_biquad_tick(mp_obj_t self_in, biquad_filter_state *filter_state, synthio_block_state_t *state) {
     synthio_block_biquad_t *self = MP_OBJ_TO_PTR(self_in);
 
-    mp_float_t W0 = synthio_block_slot_get(&self->f0) * synthio_global_W_scale;
-    mp_float_t Q = synthio_block_slot_get(&self->Q);
+    mp_float_t W0 = synthio_block_slot_get(&self->f0, state) * state->W_scale;
+    mp_float_t Q = synthio_block_slot_get(&self->Q, state);
 
     // n.b., assumes that the `mode` field is read-only
     // n.b., use of `&` is deliberate, avoids short-circuiting behavior

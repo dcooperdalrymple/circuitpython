@@ -18,4 +18,4 @@ typedef struct synthio_block_biquad {
     mp_float_t cached_W0, cached_Q;
 } synthio_block_biquad_t;
 
-void common_hal_synthio_block_biquad_tick(mp_obj_t self_in, biquad_filter_state *filter_state);
+void common_hal_synthio_block_biquad_tick(mp_obj_t self_in, biquad_filter_state *filter_state, synthio_block_state_t *state);

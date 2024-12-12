@@ -36,6 +36,11 @@ typedef struct {
     envelope_state_e state;
 } synthio_envelope_state_t;
 
+typedef struct synthio_block_state {
+    mp_float_t rate_scale, W_scale;
+    uint8_t tick;
+} synthio_block_state_t;
+
 typedef struct synthio_synth {
     uint32_t sample_rate;
     uint32_t total_envelope;
@@ -51,6 +56,7 @@ typedef struct synthio_synth {
     uint32_t accum[CIRCUITPY_SYNTHIO_MAX_CHANNELS];
     uint32_t ring_accum[CIRCUITPY_SYNTHIO_MAX_CHANNELS];
     synthio_envelope_state_t envelope_state[CIRCUITPY_SYNTHIO_MAX_CHANNELS];
+    synthio_block_state_t block_state;
 } synthio_synth_t;
 
 typedef struct {
@@ -88,6 +94,4 @@ int synthio_lfo_step(synthio_lfo_state_t *state, uint16_t dur);
 int synthio_sweep_step(synthio_lfo_state_t *state, uint16_t dur);
 int synthio_sweep_in_step(synthio_lfo_state_t *state, uint16_t dur);
 
-extern mp_float_t synthio_global_rate_scale, synthio_global_W_scale;
-extern uint8_t synthio_global_tick;
-void shared_bindings_synthio_lfo_tick(uint32_t sample_rate, uint16_t num_samples);
+void shared_bindings_synthio_lfo_tick(uint32_t sample_rate, uint16_t num_samples, synthio_block_state_t *state);

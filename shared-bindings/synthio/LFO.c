@@ -106,11 +106,11 @@ static mp_obj_t synthio_lfo_make_new(const mp_obj_type_t *type_in, size_t n_args
     properties_construct_helper(result, lfo_properties + 1, args + 1, MP_ARRAY_SIZE(lfo_properties) - 1);
 
     // Force computation of the LFO's initial output
-    synthio_global_rate_scale = 0;
-    self->base.last_tick = synthio_global_tick - 1;
+    synthio_block_state_t state;
+    self->base.last_tick = state.tick - 1;
     synthio_block_slot_t slot;
     synthio_block_assign_slot(MP_OBJ_FROM_PTR(result), &slot, MP_QSTR_self);
-    (void)synthio_block_slot_get(&slot);
+    (void)synthio_block_slot_get(&slot, &state);
 
     return result;
 };

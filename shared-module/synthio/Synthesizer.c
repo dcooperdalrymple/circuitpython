@@ -62,7 +62,7 @@ audioio_get_buffer_result_t synthio_synthesizer_get_buffer(synthio_synthesizer_o
             continue;
         }
         synthio_block_slot_t slot = { item };
-        (void)synthio_block_slot_get(&slot);
+        (void)synthio_block_slot_get(&slot, &self->synth.block_state);
     }
     return GET_BUFFER_MORE_DATA;
 }

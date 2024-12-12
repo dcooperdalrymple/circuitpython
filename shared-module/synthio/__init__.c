@@ -16,9 +16,6 @@
 
 #define MP_PI MICROPY_FLOAT_CONST(3.14159265358979323846)
 
-mp_float_t synthio_global_rate_scale, synthio_global_W_scale;
-uint8_t synthio_global_tick;
-
 static const int16_t square_wave[] = {-32768, 32767};
 
 static const uint16_t notes[] = {8372, 8870, 9397, 9956, 10548, 11175, 11840,
@@ -183,19 +180,19 @@ static bool synth_note_into_buffer(synthio_synth_t *synth, int chan, int32_t *ou
         dds_rate = (sample_rate / 2 + ((uint64_t)(base_freq * waveform_length) << (SYNTHIO_FREQUENCY_SHIFT - 10 + octave))) / sample_rate;
     } else {
         synthio_note_obj_t *note = MP_OBJ_TO_PTR(note_obj);
-        int32_t frequency_scaled = synthio_note_step(note, sample_rate, dur, loudness);
+        int32_t frequency_scaled = synthio_note_step(note, sample_rate, dur, loudness, &synth->block_state);
         if (note->waveform_buf.buf) {
             waveform = note->waveform_buf.buf;
             waveform_length = note->waveform_buf.len;
-            waveform_start = (uint32_t)synthio_block_slot_get_limited(&note->waveform_loop_start, 0, waveform_length - 1);
-            waveform_length = (uint32_t)synthio_block_slot_get_limited(&note->waveform_loop_end, waveform_start + 1, waveform_length);
+            waveform_start = (uint32_t)synthio_block_slot_get_limited(&note->waveform_loop_start, 0, waveform_length - 1, &synth->block_state);
+            waveform_length = (uint32_t)synthio_block_slot_get_limited(&note->waveform_loop_end, waveform_start + 1, waveform_length, &synth->block_state);
         }
         dds_rate = synthio_frequency_convert_scaled_to_dds((uint64_t)frequency_scaled * (waveform_length - waveform_start), sample_rate);
         if (note->ring_frequency_scaled != 0 && note->ring_waveform_buf.buf) {
             ring_waveform = note->ring_waveform_buf.buf;
             ring_waveform_length = note->ring_waveform_buf.len;
-            ring_waveform_start = (uint32_t)synthio_block_slot_get_limited(&note->ring_waveform_loop_start, 0, ring_waveform_length - 1);
-            ring_waveform_length = (uint32_t)synthio_block_slot_get_limited(&note->ring_waveform_loop_end, ring_waveform_start + 1, ring_waveform_length);
+            ring_waveform_start = (uint32_t)synthio_block_slot_get_limited(&note->ring_waveform_loop_start, 0, ring_waveform_length - 1, &synth->block_state);
+            ring_waveform_length = (uint32_t)synthio_block_slot_get_limited(&note->ring_waveform_loop_end, ring_waveform_start + 1, ring_waveform_length, &synth->block_state);
             ring_dds_rate = synthio_frequency_convert_scaled_to_dds((uint64_t)note->ring_frequency_bent * (ring_waveform_length - ring_waveform_start), sample_rate);
             uint32_t lim = ring_waveform_length << SYNTHIO_FREQUENCY_SHIFT;
             if (ring_dds_rate > lim / sizeof(int16_t)) {
@@ -294,7 +291,7 @@ void synthio_synth_synthesize(synthio_synth_t *synth, uint8_t **bufptr, uint32_t
         return;
     }
 
-    shared_bindings_synthio_lfo_tick(synth->sample_rate, SYNTHIO_MAX_DUR);
+    shared_bindings_synthio_lfo_tick(synth->sample_rate, SYNTHIO_MAX_DUR, &synth->block_state);
 
     synth->buffer_index = !synth->buffer_index;
     synth->other_channel = 1 - channel;
@@ -331,7 +328,7 @@ void synthio_synth_synthesize(synthio_synth_t *synth, uint8_t **bufptr, uint32_t
         if (filter_obj != mp_const_none) {
             synthio_note_obj_t *note = MP_OBJ_TO_PTR(note_obj);
             if (mp_obj_is_type(filter_obj, &synthio_block_biquad_type_obj)) {
-                common_hal_synthio_block_biquad_tick(filter_obj, &note->filter_state);
+                common_hal_synthio_block_biquad_tick(filter_obj, &note->filter_state, &synth->block_state);
             }
             synthio_biquad_filter_samples(&note->filter_state, tmp_buffer32, dur);
         }
@@ -487,34 +484,34 @@ uint32_t synthio_frequency_convert_scaled_to_dds(uint64_t frequency_scaled, int3
     return (sample_rate / 2 + frequency_scaled) / sample_rate;
 }
 
-void shared_bindings_synthio_lfo_tick(uint32_t sample_rate, uint16_t num_samples) {
+void shared_bindings_synthio_lfo_tick(uint32_t sample_rate, uint16_t num_samples, synthio_block_state_t *state) {
     mp_float_t recip_sample_rate = MICROPY_FLOAT_CONST(1.) / sample_rate;
-    synthio_global_rate_scale = num_samples * recip_sample_rate;
-    synthio_global_W_scale = (2 * MP_PI) * recip_sample_rate;
-    synthio_global_tick++;
+    state->rate_scale = num_samples * recip_sample_rate;
+    state->W_scale = (2 * MP_PI) * recip_sample_rate;
+    state->tick++;
 }
 
-mp_float_t synthio_block_slot_get(synthio_block_slot_t *slot) {
+mp_float_t synthio_block_slot_get(synthio_block_slot_t *slot, synthio_block_state_t *state) {
     // all numbers (and None!) previously converted to float in synthio_block_assign_slot
     if (mp_obj_is_float(slot->obj)) {
         return mp_obj_get_float(slot->obj);
     }
 
     synthio_block_base_t *block = MP_OBJ_TO_PTR(slot->obj);
-    if (block->last_tick == synthio_global_tick) {
+    if (block->last_tick == state->tick) {
         return block->value;
     }
 
-    block->last_tick = synthio_global_tick;
+    block->last_tick = state->tick;
     // previously verified by call to mp_proto_get in synthio_block_assign_slot
     const synthio_block_proto_t *p = MP_OBJ_TYPE_GET_SLOT(mp_obj_get_type(slot->obj), protocol);
-    mp_float_t value = p->tick(slot->obj);
+    mp_float_t value = p->tick(slot->obj, state);
     block->value = value;
     return value;
 }
 
-mp_float_t synthio_block_slot_get_limited(synthio_block_slot_t *lfo_slot, mp_float_t lo, mp_float_t hi) {
-    mp_float_t value = synthio_block_slot_get(lfo_slot);
+mp_float_t synthio_block_slot_get_limited(synthio_block_slot_t *lfo_slot, mp_float_t lo, mp_float_t hi, synthio_block_state_t *state) {
+    mp_float_t value = synthio_block_slot_get(lfo_slot, state);
     if (value < lo) {
         return lo;
     }
@@ -524,8 +521,8 @@ mp_float_t synthio_block_slot_get_limited(synthio_block_slot_t *lfo_slot, mp_flo
     return value;
 }
 
-int32_t synthio_block_slot_get_scaled(synthio_block_slot_t *lfo_slot, mp_float_t lo, mp_float_t hi) {
-    mp_float_t value = synthio_block_slot_get_limited(lfo_slot, lo, hi);
+int32_t synthio_block_slot_get_scaled(synthio_block_slot_t *lfo_slot, mp_float_t lo, mp_float_t hi, synthio_block_state_t *state) {
+    mp_float_t value = synthio_block_slot_get_limited(lfo_slot, lo, hi, state);
     return (int32_t)MICROPY_FLOAT_C_FUN(round)(MICROPY_FLOAT_C_FUN(ldexp)(value, 15));
 }
 

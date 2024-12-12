@@ -40,6 +40,7 @@ typedef struct {
     bool more_data;
 
     mp_obj_t sample;
+    synthio_block_state_t block_state;
 } audiofilters_filter_obj_t;
 
 void reset_filter_states(audiofilters_filter_obj_t *self);

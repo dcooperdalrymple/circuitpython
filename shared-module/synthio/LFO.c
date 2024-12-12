@@ -13,11 +13,11 @@
 
 #define ALMOST_ONE (MICROPY_FLOAT_CONST(32767.) / 32768)
 
-mp_float_t common_hal_synthio_lfo_tick(mp_obj_t self_in) {
+mp_float_t common_hal_synthio_lfo_tick(mp_obj_t self_in, synthio_block_state_t *state) {
     synthio_lfo_obj_t *lfo = MP_OBJ_TO_PTR(self_in);
 
-    mp_float_t rate = synthio_block_slot_get(&lfo->rate) * synthio_global_rate_scale;
-    mp_float_t phase_offset = synthio_block_slot_get(&lfo->phase_offset);
+    mp_float_t rate = synthio_block_slot_get(&lfo->rate, state) * state->rate_scale;
+    mp_float_t phase_offset = synthio_block_slot_get(&lfo->phase_offset, state);
 
     mp_float_t accum = lfo->accum + rate + phase_offset;
 
@@ -54,8 +54,8 @@ mp_float_t common_hal_synthio_lfo_tick(mp_obj_t self_in) {
         value = value * (1 - frac) + waveform[idxp1] * frac;
     }
 
-    mp_float_t scale = synthio_block_slot_get(&lfo->scale);
-    mp_float_t offset = synthio_block_slot_get(&lfo->offset);
+    mp_float_t scale = synthio_block_slot_get(&lfo->scale, state);
+    mp_float_t offset = synthio_block_slot_get(&lfo->offset, state);
     value = MICROPY_FLOAT_C_FUN(ldexp)(value, -15) * scale + offset;
 
     return value;

@@ -48,6 +48,7 @@ typedef struct {
     uint32_t echo_buffer_right_pos; // words << 8
 
     mp_obj_t sample;
+    synthio_block_state_t block_state;
 } audiodelays_echo_obj_t;
 
 void recalculate_delay(audiodelays_echo_obj_t *self, mp_float_t f_delay_ms);

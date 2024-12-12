@@ -251,7 +251,7 @@ audioio_get_buffer_result_t audiofilters_filter_get_buffer(audiofilters_filter_o
     }
 
     // get the effect values we need from the BlockInput. These may change at run time so you need to do bounds checking if required
-    mp_float_t mix = MIN(1.0, MAX(synthio_block_slot_get(&self->mix), 0.0));
+    mp_float_t mix = MIN(1.0, MAX(synthio_block_slot_get(&self->mix, &self->block_state), 0.0));
 
     // Switch our buffers to the other buffer
     self->last_buf_idx = !self->last_buf_idx;

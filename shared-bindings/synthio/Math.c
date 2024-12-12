@@ -152,7 +152,7 @@ static mp_obj_t synthio_math_make_new(const mp_obj_type_t *type_in, size_t n_arg
 static mp_obj_t synthio_math_make_new_common(mp_arg_val_t args[MP_ARRAY_SIZE(math_properties)]) {
     synthio_math_obj_t *self = mp_obj_malloc(synthio_math_obj_t, &synthio_math_type);
 
-    self->base.last_tick = synthio_global_tick;
+    self->base.last_tick = -1;
 
     mp_obj_t result = MP_OBJ_FROM_PTR(self);
     properties_construct_helper(result, math_properties, args, MP_ARRAY_SIZE(math_properties));

@@ -20,11 +20,11 @@ typedef struct synthio_lfo_obj {
 } synthio_lfo_obj_t;
 
 // Update the value inside the lfo slot if the value is an LFO, returning the new value
-mp_float_t synthio_block_slot_get(synthio_block_slot_t *block_slot);
+mp_float_t synthio_block_slot_get(synthio_block_slot_t *block_slot, synthio_block_state_t *state);
 // the same, but the output is constrained to be between lo and hi
-mp_float_t synthio_block_slot_get_limited(synthio_block_slot_t *block_slot, mp_float_t lo, mp_float_t hi);
+mp_float_t synthio_block_slot_get_limited(synthio_block_slot_t *block_slot, mp_float_t lo, mp_float_t hi, synthio_block_state_t *state);
 // the same, but the output is constrained to be between lo and hi and converted to an integer with 15 fractional bits
-int32_t synthio_block_slot_get_scaled(synthio_block_slot_t *block_slot, mp_float_t lo, mp_float_t hi);
+int32_t synthio_block_slot_get_scaled(synthio_block_slot_t *block_slot, mp_float_t lo, mp_float_t hi, synthio_block_state_t *state);
 
 // Assign an object (which may be a float or a synthio_block_obj_t) to an block slot
 void synthio_block_assign_slot(mp_obj_t obj, synthio_block_slot_t *block_slot, qstr arg_name);
